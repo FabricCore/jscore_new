@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "jscore",
+  "version": "${version}",
+  "name": "JSCore",
+  "description": "The Minecraft aware JavaScript runtime.",
+  "authors": [
+    "Siriusmart"
+  ],
+  "contact": {
+    "repo": "https://github.com/fabriccore/jscore_new"
+  },
+  "icon": "assets/template/icon.png",
+  "custom": {},
+  "depends": {
+    "java": ">=21",
+    "minecraft": ["${mc_version}"]
+  },
+  "entrypoints": {
+    "main": [
+      "ws.siri.jscore.Core"
+    ]
+  }
+}
