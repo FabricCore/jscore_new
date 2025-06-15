@@ -20,7 +20,7 @@ public class JSObject extends ScriptableObject {
 
     @Override
     public String getClassName() {
-        return internal.stringQualifier().replace('/', '.');
+        return String.format("JSObject(%s)", internal.stringQualifier().replace('/', '.'));
     }
 
     @Override
