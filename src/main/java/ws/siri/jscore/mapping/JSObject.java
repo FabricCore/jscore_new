@@ -7,7 +7,7 @@ import java.util.Optional;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
-import ws.siri.jscore.Runtime;
+import ws.siri.jscore.runtime.Runtime;
 import ws.siri.yarnwrap.mapping.JavaLike;
 import ws.siri.yarnwrap.mapping.JavaObject;
 
@@ -30,7 +30,7 @@ public class JSObject extends ScriptableObject {
         if (res.isPresent())
             return Runtime.asJS(res.get());
         else
-            return NOT_FOUND;
+            return super.get(name, start);
     }
 
     @Override
@@ -53,7 +53,7 @@ public class JSObject extends ScriptableObject {
 
     @Override
     public boolean has(String name, Scriptable start) {
-        return internal.getRelative(name).isPresent();
+        return internal.getRelative(name).isPresent() || super.has(name, start);
     }
 
     @Override
@@ -74,7 +74,8 @@ public class JSObject extends ScriptableObject {
     @Override
     public void put(String name, Scriptable start, Object value) {
         value = Runtime.unwrap(value);
-        internal.setField(name, value);
+        if(!internal.setField(name, value))
+            super.put(name, start, value);
     }
 
     @SuppressWarnings("unchecked")
@@ -86,7 +87,10 @@ public class JSObject extends ScriptableObject {
         } else if (internal.internal instanceof List) {
             ((List<Object>) internal.internal).set(index, value);
         }
+    }
 
-        throw new UnsupportedOperationException("Could not set value on " + internal);
+    @Override
+    public String toString() {
+        return String.format("JSObject(%s)", internal.toString());
     }
 }

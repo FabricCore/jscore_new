@@ -14,7 +14,9 @@
   "custom": {},
   "depends": {
     "java": ">=21",
-    "minecraft": ["${mc_version}"]
+    "minecraft": ["${mc_version}"],
+    "yarnwrap": ">=0.2",
+    "fabric": "*"
   },
   "entrypoints": {
     "main": [

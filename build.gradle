@@ -14,6 +14,7 @@ dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
     modImplementation "ws.siri:yarnwrap:0.2.0-7"
 
@@ -70,7 +71,7 @@ publishing {
     maven(MavenPublication) {
       groupId = "ws.siri"
       artifactId = "jscore"
-      version = "0.2.0-1"
+      version = "0.2.0-2"
       from components.java
     }
   }

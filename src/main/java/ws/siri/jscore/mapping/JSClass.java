@@ -43,13 +43,18 @@ public class JSClass extends ScriptableObject implements Function {
         Optional<JavaLike> res = internal.getRelative(name);
 
         if (res.isPresent())
-            return ws.siri.jscore.Runtime.asJS(res.get());
+            return ws.siri.jscore.runtime.Runtime.asJS(res.get());
         else
-            return NOT_FOUND;
+            return super.get(name, start);
     }
 
     @Override
     public boolean has(String name, Scriptable start) {
-        return internal.getRelative(name).isPresent();
+        return internal.getRelative(name).isPresent() || super.has(name, start);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("JSClass(%s)", internal.toString());
     }
 }
