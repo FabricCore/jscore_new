@@ -8,7 +8,6 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
 import ws.siri.jscore.runtime.Runtime;
-import ws.siri.yarnwrap.mapping.JavaLike;
 import ws.siri.yarnwrap.mapping.JavaObject;
 
 public class JSObject extends ScriptableObject {
@@ -25,7 +24,7 @@ public class JSObject extends ScriptableObject {
 
     @Override
     public Object get(String name, Scriptable start) {
-        Optional<JavaLike> res = internal.getRelative(name);
+        Optional<Object> res = internal.getRelative(name);
 
         if (res.isPresent())
             return Runtime.asJS(res.get());

@@ -9,7 +9,6 @@ import org.mozilla.javascript.ScriptableObject;
 
 import ws.siri.yarnwrap.mapping.JavaClass;
 import ws.siri.yarnwrap.mapping.JavaFunction;
-import ws.siri.yarnwrap.mapping.JavaLike;
 import ws.siri.yarnwrap.mapping.JavaObject;
 
 public class JSClass extends ScriptableObject implements Function {
@@ -40,7 +39,7 @@ public class JSClass extends ScriptableObject implements Function {
 
     @Override
     public Object get(String name, Scriptable start) {
-        Optional<JavaLike> res = internal.getRelative(name);
+        Optional<Object> res = internal.getRelative(name);
 
         if (res.isPresent())
             return ws.siri.jscore.runtime.Runtime.asJS(res.get());

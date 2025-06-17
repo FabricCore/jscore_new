@@ -5,7 +5,6 @@ import java.util.Optional;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
-import ws.siri.yarnwrap.mapping.JavaLike;
 import ws.siri.yarnwrap.mapping.JavaPackage;
 import ws.siri.yarnwrap.mapping.MappingTree;
 
@@ -23,7 +22,7 @@ public class JSPackage extends ScriptableObject {
     
     @Override
     public Object get(String name, Scriptable start) {
-        Optional<JavaLike> res = internal.getRelative(name);
+        Optional<Object> res = internal.getRelative(name);
 
         if (res.isPresent())
             return ws.siri.jscore.runtime.Runtime.asJS(res.get());
