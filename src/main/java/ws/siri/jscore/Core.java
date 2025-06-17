@@ -1,5 +1,11 @@
 package ws.siri.jscore;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
+
+import org.apache.commons.io.IOUtils;
+
 import com.mojang.brigadier.arguments.StringArgumentType;
 
 import net.fabricmc.api.ModInitializer;
@@ -18,5 +24,16 @@ public class Core implements ModInitializer {
                             .then(ClientCommandManager.argument("expression", StringArgumentType.greedyString())
                                     .executes(CoreCommand::evaluate))));
         });
+    }
+
+    public static void main(String[] args) throws IOException {
+        String resourceName = "fabric.mod.json"; // Name of the resource file
+
+        // Use the class loader to check for the resource
+        InputStream inputStream = org.apache.commons.codec.BinaryDecoder.class.getClassLoader().getResourceAsStream(resourceName);
+
+        
+        var s = IOUtils.toString(inputStream, Charset.defaultCharset());
+        System.out.println(s);
     }
 }

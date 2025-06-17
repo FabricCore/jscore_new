@@ -2,8 +2,6 @@ package ws.siri.jscore.runtime;
 
 import java.util.HashMap;
 
-import org.mozilla.javascript.Scriptable;
-
 import ws.siri.jscore.mapping.JSClass;
 import ws.siri.jscore.mapping.JSFunction;
 import ws.siri.jscore.mapping.JSObject;
@@ -25,7 +23,7 @@ public class Runtime {
         return getModule(path).evaluate(expr);
     }
 
-    public static Scriptable asJS(Object source) {
+    public static Object asJS(Object source) {
         if (source instanceof JavaLike) {
             if (source instanceof JavaObject)
                 return new JSObject((JavaObject) source);
@@ -37,7 +35,8 @@ public class Runtime {
                 return new JSPackage((JavaPackage) source);
         }
 
-        return new JSObject(new JavaObject(source));
+        return source;
+        // return new JSObject(new JavaObject(source));
     }
 
     public static Object unwrap(Object source) {

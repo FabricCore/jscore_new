@@ -16,7 +16,7 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-    modImplementation "ws.siri:yarnwrap:0.2.0-7"
+    modImplementation "ws.siri:yarnwrap:0.2.0-8"
 
     modImplementation 'org.mozilla:rhino:1.8.0'
     modImplementation 'org.mozilla:rhino-engine:1.7.15'
@@ -71,7 +71,7 @@ publishing {
     maven(MavenPublication) {
       groupId = "ws.siri"
       artifactId = "jscore"
-      version = "0.2.0-2"
+      version = "0.2.0-3"
       from components.java
     }
   }
