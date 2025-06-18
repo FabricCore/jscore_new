@@ -7,4 +7,6 @@ Rewrite for JSCore.
 > [!IMPORTANT]
 > Requires [**Yarnwrap (>= 0.2.0)**](https://github.com/FabricCore/yarnwrap_new) and Fabric API.
 
-Commands: /jscore eval &lt;expression&gt;
+Commands:
+- /jscore eval &lt;expression&gt;
+- /jscore require [strict/lazy] &lt;path&gt;

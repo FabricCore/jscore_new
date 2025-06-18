@@ -1,7 +1,17 @@
 package ws.siri.jscore.runtime;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
+import net.fabricmc.loader.api.FabricLoader;
+import ws.siri.jscore.Core;
 import ws.siri.jscore.mapping.JSClass;
 import ws.siri.jscore.mapping.JSFunction;
 import ws.siri.jscore.mapping.JSObject;
@@ -13,14 +23,15 @@ import ws.siri.yarnwrap.mapping.JavaObject;
 import ws.siri.yarnwrap.mapping.JavaPackage;
 
 public class Runtime {
-    private static HashMap<String[], Module> modules = new HashMap<>();
+    private static HashMap<List<String>, Module> modules = new HashMap<>();
 
-    public static Object evaluate(String expr, String label) throws Exception {
-        return evaluateAt(expr, new String[] { "evaluator" });
-    }
+    public static Object evaluate(String expr, List<String> path) {
+        try {
+            return getModule(path).evaluate(expr);
+        } catch (Exception e) {
+            throw new RuntimeException("caught " + e);
+        }
 
-    public static Object evaluateAt(String expr, String[] path) {
-        return getModule(path).evaluate(expr);
     }
 
     public static Object asJS(Object source) {
@@ -53,10 +64,74 @@ public class Runtime {
 
     }
 
-    private static Module getModule(String[] path) {
+    private static Module getModule(List<String> path) {
         if (!modules.containsKey(path))
             modules.put(path, new Module(path));
 
         return modules.get(path);
+    }
+
+    @Nullable
+    public static Object call(Path path, String mode, String content) {
+        path = Module.normalisePath(path);
+        List<String> pathList;
+
+        switch (mode) {
+            case "lazy":
+                pathList = Arrays.asList(path.toString().split("/"));
+                if (!modules.containsKey(pathList)) {
+                    List<String> pathWithExtension = new ArrayList<>(pathList);
+                    pathWithExtension.set(pathWithExtension.size() - 1, pathWithExtension.getLast() + ".js");
+
+                    if (modules.containsKey(pathWithExtension)) {
+                        pathList = pathWithExtension;
+                    } else {
+                        List<String> pathWithIndexJs = new ArrayList<>(pathList);
+                        pathWithIndexJs.add("index.js");
+
+                        if (modules.containsKey(pathWithIndexJs)) {
+                            pathList = pathWithIndexJs;
+                        } else {
+                            return call(path, "strict", content);
+                        }
+                    }
+                }
+                return modules.get(pathList).exports;
+
+            case "strict":
+                Path basePath = FabricLoader.getInstance().getConfigDir().resolve(Core.MOD_ID);
+
+                if (!Files.exists(basePath.resolve(path))) {
+                    if (!path.getFileName().endsWith(".js")) {
+                        Path newPath = path.resolveSibling(path.getFileName() + ".js");
+                        if (Files.exists(basePath.resolve(newPath))) {
+                            path = newPath;
+                        } else {
+                            throw new RuntimeException("Could not find file at " + newPath.toString());
+                        }
+                    } else {
+                        throw new RuntimeException("Could not find file at " + path.toString());
+                    }
+                } else if (Files.isDirectory(basePath.resolve(path))) {
+                    Path newPath = path.resolve("index.js");
+                    if (Files.exists(basePath.resolve(newPath))) {
+                        path = newPath;
+                    } else {
+                        throw new RuntimeException("Could not find file at " + newPath.toString());
+                    }
+                }
+
+                try {
+                    content = Files.readString(basePath.resolve(path));
+                } catch (IOException e) {
+                    throw new RuntimeException(String.format("Error reading file %s: %s", path, e));
+                }
+
+                pathList = Arrays.asList(path.toString().split("/"));
+                evaluate(content, pathList);
+                return modules.get(pathList).exports;
+            default:
+                throw new UnsupportedOperationException("No require mode '" + mode + "'");
+        }
     }
 }

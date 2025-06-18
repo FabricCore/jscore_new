@@ -1,39 +1,54 @@
 package ws.siri.jscore;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.Charset;
-
-import org.apache.commons.io.IOUtils;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
-import ws.siri.jscore.behaviour.CoreCommand;
+import net.fabricmc.loader.api.FabricLoader;
+import ws.siri.jscore.behaviour.EvaluateCommand;
+import ws.siri.jscore.behaviour.RequireCommand;
+import ws.siri.jscore.runtime.Runtime;
+import ws.siri.yarnwrap.mapping.JavaObject;
 
 public class Core implements ModInitializer {
     public static final String MOD_ID = "jscore";
 
     @Override
     public void onInitialize() {
+        JavaObject.addNoWrap("org.mozilla");
+
+        entry();
+
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             dispatcher.register(ClientCommandManager.literal("jscore")
                     .then(ClientCommandManager.literal("eval")
                             .then(ClientCommandManager.argument("expression", StringArgumentType.greedyString())
-                                    .executes(CoreCommand::evaluate))));
+                                    .executes(EvaluateCommand::evaluate)))
+                    .then(ClientCommandManager.literal("require")
+                            .then(ClientCommandManager.literal("lazy")
+                                    .then(ClientCommandManager.argument("path", StringArgumentType.greedyString())
+                                            .executes(RequireCommand::lazy)))
+                            .then(ClientCommandManager.literal("strict")
+                                    .then(ClientCommandManager.argument("path", StringArgumentType.greedyString())
+                                            .executes(RequireCommand::strict)))));
         });
     }
 
+    public static void entry() {
+        Path entryPoint = FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).resolve("init.js");
+
+        if (Files.exists(entryPoint)) {
+            Runtime.call(Path.of("init"), "lazy", null);
+        }
+    }
+
     public static void main(String[] args) throws IOException {
-        String resourceName = "fabric.mod.json"; // Name of the resource file
-
-        // Use the class loader to check for the resource
-        InputStream inputStream = org.apache.commons.codec.BinaryDecoder.class.getClassLoader().getResourceAsStream(resourceName);
-
-        
-        var s = IOUtils.toString(inputStream, Charset.defaultCharset());
-        System.out.println(s);
+        System.out.println(null instanceof Object);
+        System.out.println(Path.of("./test/test").normalize());
     }
 }
