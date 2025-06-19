@@ -71,7 +71,7 @@ publishing {
     maven(MavenPublication) {
       groupId = "ws.siri"
       artifactId = "jscore"
-      version = "0.2.0-4"
+      version = "0.2.0-5"
       from components.java
     }
   }

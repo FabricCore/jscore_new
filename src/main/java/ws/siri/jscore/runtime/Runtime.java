@@ -34,6 +34,11 @@ public class Runtime {
 
     }
 
+    /**
+     * Convert a JavaLike to a JSLike
+     * @param source
+     * @return
+     */
     public static Object asJS(Object source) {
         if (source instanceof JavaLike) {
             if (source instanceof JavaObject)
@@ -50,6 +55,11 @@ public class Runtime {
         // return new JSObject(new JavaObject(source));
     }
 
+    /**
+     * Unwrap one layer of wrapper
+     * @param source
+     * @return
+     */
     public static Object unwrap(Object source) {
         if (source instanceof JSObject)
             return ((JSObject) source).internal.internal;
@@ -64,6 +74,11 @@ public class Runtime {
 
     }
 
+    /**
+     * Return the module at path, create a new one if does not exist
+     * @param path
+     * @return
+     */
     private static Module getModule(List<String> path) {
         if (!modules.containsKey(path))
             modules.put(path, new Module(path));
@@ -71,6 +86,13 @@ public class Runtime {
         return modules.get(path);
     }
 
+    /**
+     * Evaluate a file, and returns the value of module.exports
+     * @param path path from which the expression comes from
+     * @param mode mod to evaluate in: lazy or strict
+     * @param content TODO provide a script instead of using the file content
+     * @return module.exports
+     */
     @Nullable
     public static Object call(Path path, String mode, String content) {
         path = Module.normalisePath(path);

@@ -13,13 +13,31 @@ import ws.siri.jscore.mapping.JSFunction;
 import ws.siri.jscore.mapping.JSObject;
 import ws.siri.yarnwrap.mapping.JavaObject;
 
+/**
+ * module object in script
+ */
 public class Module extends ScriptableObject {
+    /**
+     * File scope
+     */
     private Scriptable scope;
+    /** 
+     * Context
+     */
     private Context cx;
 
+    /**
+     * Module.exports object
+     */
     public Object exports = Undefined.instance;
+    /**
+     * module.require()
+     */
     public JSFunction require = (JSFunction) new JSObject(new JavaObject(new Require())).get("call", null);
 
+    /**
+     * path to current module (file path)
+     */
     private final List<String> path;
 
     public Module(List<String> path) {
@@ -33,6 +51,11 @@ public class Module extends ScriptableObject {
         this.path = path;
     }
 
+    /**
+     * evaluate an expression in module
+     * @param expr
+     * @return
+     */
     public Object evaluate(String expr) {
         Object res = cx.evaluateString(scope, expr, String.join(".", path), 1, null);
         return Context.jsToJava(res, Object.class);
@@ -85,6 +108,12 @@ public class Module extends ScriptableObject {
         return exports;
     }
 
+    /**
+     * restrict path to be within .minecraft/config/jscore,
+     * and remove ../ and ./ accordingly
+     * @param path
+     * @return
+     */
     public static Path normalisePath(Path path) {
         path = path.normalize();
 
@@ -99,6 +128,9 @@ public class Module extends ScriptableObject {
         return path;
     }
 
+    /**
+     * Object containing overloaded function for modules.require
+     */
     public class Require {
         private Path getRelativePath(String relativePath) {
             return normalisePath(Path.of(String.join("/", path)).resolveSibling(relativePath));

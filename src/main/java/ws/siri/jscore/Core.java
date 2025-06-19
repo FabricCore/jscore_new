@@ -12,6 +12,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.loader.api.FabricLoader;
 import ws.siri.jscore.behaviour.EvaluateCommand;
 import ws.siri.jscore.behaviour.RequireCommand;
+import ws.siri.jscore.behaviour.WebCommand;
 import ws.siri.jscore.runtime.Runtime;
 import ws.siri.yarnwrap.mapping.JavaObject;
 
@@ -29,6 +30,9 @@ public class Core implements ModInitializer {
                     .then(ClientCommandManager.literal("eval")
                             .then(ClientCommandManager.argument("expression", StringArgumentType.greedyString())
                                     .executes(EvaluateCommand::evaluate)))
+                    .then(ClientCommandManager.literal("web")
+                            .then(ClientCommandManager.argument("url", StringArgumentType.greedyString())
+                                    .executes(WebCommand::web)))
                     .then(ClientCommandManager.literal("require")
                             .then(ClientCommandManager.literal("lazy")
                                     .then(ClientCommandManager.argument("path", StringArgumentType.greedyString())

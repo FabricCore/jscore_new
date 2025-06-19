@@ -1,5 +1,9 @@
 package ws.siri.jscore.behaviour;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse.BodyHandlers;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -11,19 +15,26 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import ws.siri.jscore.runtime.Runtime;
 
-/**
- * /jscore eval &lt;script&gt;
- * 
- * Evaluate script content at scope "repo"
- */
-public class EvaluateCommand {
-    public static int evaluate(CommandContext<FabricClientCommandSource> context) {
+public class WebCommand {
+    private static HttpClient client = HttpClient.newBuilder()
+            .followRedirects(HttpClient.Redirect.NORMAL)
+            .build();
+
+    public static int web(CommandContext<FabricClientCommandSource> context) {
         CompletableFuture.runAsync(() -> {
-            String script = context.getArgument("expression", String.class);
+            String url = context.getArgument("url", String.class);
 
             if (MinecraftClient.getInstance().player != null)
                 MinecraftClient.getInstance().inGameHud.getChatHud()
-                        .addMessage(Text.literal("> ").append(script).formatted(Formatting.GREEN));
+                        .addMessage(Text.literal("Running from ").append(url).formatted(Formatting.GREEN));
+
+            HttpRequest req = HttpRequest.newBuilder(URI.create(url)).build();
+            String script;
+            try {
+                script = client.send(req, BodyHandlers.ofString()).body();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
 
             try {
                 Object res = Runtime.evaluate(script, List.of("repl"));
