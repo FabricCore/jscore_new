@@ -37,7 +37,7 @@ public class WebCommand {
             }
 
             try {
-                Object res = Runtime.evaluate(script, List.of("repl"));
+                Object res = Runtime.evaluate(script, List.of("repl"), true);
 
                 if (MinecraftClient.getInstance().player != null)
                     MinecraftClient.getInstance().inGameHud.getChatHud()

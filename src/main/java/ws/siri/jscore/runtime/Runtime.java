@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
+import org.mozilla.javascript.Context;
 
 import net.fabricmc.loader.api.FabricLoader;
 import ws.siri.jscore.Core;
@@ -25,9 +26,9 @@ import ws.siri.yarnwrap.mapping.JavaPackage;
 public class Runtime {
     private static HashMap<List<String>, Module> modules = new HashMap<>();
 
-    public static Object evaluate(String expr, List<String> path) {
+    public static Object evaluate(String expr, List<String> path, boolean isLazy) {
         try {
-            return getModule(path).evaluate(expr);
+            return getModule(path).evaluate(expr, isLazy);
         } catch (Exception e) {
             throw new RuntimeException("caught " + e);
         }
@@ -36,6 +37,7 @@ public class Runtime {
 
     /**
      * Convert a JavaLike to a JSLike
+     * 
      * @param source
      * @return
      */
@@ -57,6 +59,7 @@ public class Runtime {
 
     /**
      * Unwrap one layer of wrapper
+     * 
      * @param source
      * @return
      */
@@ -76,6 +79,7 @@ public class Runtime {
 
     /**
      * Return the module at path, create a new one if does not exist
+     * 
      * @param path
      * @return
      */
@@ -88,13 +92,19 @@ public class Runtime {
 
     /**
      * Evaluate a file, and returns the value of module.exports
-     * @param path path from which the expression comes from
-     * @param mode mod to evaluate in: lazy or strict
-     * @param content TODO provide a script instead of using the file content
+     * 
+     * @param path    path from which the expression comes from
+     * @param mode    mod to evaluate in: lazy or strict
+     * @param content TODO provide a script instead of using the file content 
      * @return module.exports
      */
     @Nullable
     public static Object call(Path path, String mode, String content) {
+        return call(path, mode, content, !mode.equals("strict"));
+    }
+
+    @Nullable
+    public static Object call(Path path, String mode, String content, boolean isLazy) {
         path = Module.normalisePath(path);
         List<String> pathList;
 
@@ -114,7 +124,7 @@ public class Runtime {
                         if (modules.containsKey(pathWithIndexJs)) {
                             pathList = pathWithIndexJs;
                         } else {
-                            return call(path, "strict", content);
+                            return call(path, "strict", content, true);
                         }
                     }
                 }
@@ -150,10 +160,19 @@ public class Runtime {
                 }
 
                 pathList = Arrays.asList(path.toString().split("/"));
-                evaluate(content, pathList);
+                evaluate(content, pathList, isLazy);
                 return modules.get(pathList).exports;
             default:
                 throw new UnsupportedOperationException("No require mode '" + mode + "'");
         }
+    }
+
+    public static Context getContext() {
+        Context cx = Context.getCurrentContext();
+
+        if (cx == null)
+            cx = Context.enter();
+
+        return cx;
     }
 }

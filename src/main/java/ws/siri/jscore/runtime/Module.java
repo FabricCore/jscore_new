@@ -2,6 +2,8 @@ package ws.siri.jscore.runtime;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.jetbrains.annotations.Nullable;
 import org.mozilla.javascript.Context;
@@ -21,10 +23,6 @@ public class Module extends ScriptableObject {
      * File scope
      */
     private Scriptable scope;
-    /** 
-     * Context
-     */
-    private Context cx;
 
     /**
      * Module.exports object
@@ -36,16 +34,22 @@ public class Module extends ScriptableObject {
     public JSFunction require = (JSFunction) new JSObject(new JavaObject(new Require())).get("call", null);
 
     /**
+     * Lock on when evaluating an expression
+     */
+    private Lock lock = new ReentrantLock(true);
+
+    /**
+     * If current evaluation is lazy
+     */
+    private boolean isLazy;
+
+    /**
      * path to current module (file path)
      */
     private final List<String> path;
 
     public Module(List<String> path) {
-        cx = Context.getCurrentContext();
-        if (cx == null)
-            cx = Context.enter();
-
-        scope = cx.initStandardObjects();
+        scope = Runtime.getContext().initStandardObjects();
         scope.put("module", scope, this);
 
         this.path = path;
@@ -53,12 +57,29 @@ public class Module extends ScriptableObject {
 
     /**
      * evaluate an expression in module
+     * 
      * @param expr
      * @return
      */
-    public Object evaluate(String expr) {
-        Object res = cx.evaluateString(scope, expr, String.join(".", path), 1, null);
-        return Context.jsToJava(res, Object.class);
+    public Object evaluate(String expr, boolean isLazy) {
+        this.isLazy = isLazy;
+
+        Exception maybeError = null;
+        Object res = null;
+        try {
+            lock.lock();
+            res = Runtime.getContext().evaluateString(scope, expr, String.join(".", path), 1, null);
+        } catch (Exception e) {
+            maybeError = e;
+        } finally {
+            lock.unlock();
+        }
+
+        if (maybeError == null) {
+            return Context.jsToJava(res, Object.class);
+        } else {
+            throw new RuntimeException(maybeError);
+        }
     }
 
     @Override
@@ -111,6 +132,7 @@ public class Module extends ScriptableObject {
     /**
      * restrict path to be within .minecraft/config/jscore,
      * and remove ../ and ./ accordingly
+     * 
      * @param path
      * @return
      */
@@ -137,12 +159,11 @@ public class Module extends ScriptableObject {
         }
 
         public Object call(String relativePath, String mode) {
-            System.out.println(getRelativePath(relativePath));
             return Runtime.call(getRelativePath(relativePath), mode, null);
         }
 
         public Object call(String relativePath) {
-            return Runtime.call(getRelativePath(relativePath), "lazy", null);
+            return Runtime.call(getRelativePath(relativePath), isLazy ? "lazy" : "strict", null);
         }
     }
 }
