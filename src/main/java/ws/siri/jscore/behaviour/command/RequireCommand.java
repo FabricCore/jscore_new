@@ -1,4 +1,4 @@
-package ws.siri.jscore.behaviour;
+package ws.siri.jscore.behaviour.command;
 
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
@@ -32,17 +32,17 @@ public class RequireCommand {
 
     private static void run(String path, String mode) {
         CompletableFuture.runAsync(() -> {
-            if (MinecraftClient.getInstance().player != null)
-                MinecraftClient.getInstance().inGameHud.getChatHud()
-                        .addMessage(Text.literal(String.format("Run %s (%s)", path, mode)).formatted(Formatting.GREEN));
-
-            Path filePath = Path.of(path).normalize();
-
-            if (filePath.isAbsolute()) {
-                filePath = filePath.subpath(0, filePath.getNameCount());
-            }
-
             try {
+                if (MinecraftClient.getInstance().player != null)
+                    MinecraftClient.getInstance().inGameHud.getChatHud()
+                            .addMessage(
+                                    Text.literal(String.format("Run %s (%s)", path, mode)).formatted(Formatting.GREEN));
+
+                Path filePath = Path.of(path).normalize();
+
+                if (filePath.isAbsolute()) {
+                    filePath = filePath.subpath(0, filePath.getNameCount());
+                }
                 Object res = Runtime.call(filePath, mode, null);
 
                 if (MinecraftClient.getInstance().player != null)

@@ -1,4 +1,4 @@
-package ws.siri.jscore.behaviour;
+package ws.siri.jscore.behaviour.command;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -19,13 +19,13 @@ import ws.siri.jscore.runtime.Runtime;
 public class EvaluateCommand {
     public static int evaluate(CommandContext<FabricClientCommandSource> context) {
         CompletableFuture.runAsync(() -> {
-            String script = context.getArgument("expression", String.class);
-
-            if (MinecraftClient.getInstance().player != null)
-                MinecraftClient.getInstance().inGameHud.getChatHud()
-                        .addMessage(Text.literal("> ").append(script).formatted(Formatting.GREEN));
-
             try {
+                String script = context.getArgument("expression", String.class);
+
+                if (MinecraftClient.getInstance().player != null)
+                    MinecraftClient.getInstance().inGameHud.getChatHud()
+                            .addMessage(Text.literal("> ").append(script).formatted(Formatting.GREEN));
+
                 Object res = Runtime.evaluate(script, List.of("repl"), true);
 
                 if (MinecraftClient.getInstance().player != null)
@@ -37,6 +37,7 @@ public class EvaluateCommand {
                     MinecraftClient.getInstance().inGameHud.getChatHud()
                             .addMessage(Text.literal("An error has occured when running this script:\n")
                                     .append(e.toString()).formatted(Formatting.RED));
+
             }
         });
 

@@ -10,9 +10,10 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.loader.api.FabricLoader;
-import ws.siri.jscore.behaviour.EvaluateCommand;
-import ws.siri.jscore.behaviour.RequireCommand;
-import ws.siri.jscore.behaviour.WebCommand;
+import ws.siri.jscore.behaviour.command.EvaluateCommand;
+import ws.siri.jscore.behaviour.command.RequireCommand;
+import ws.siri.jscore.behaviour.command.SnapshotCommand;
+import ws.siri.jscore.behaviour.command.WebCommand;
 import ws.siri.jscore.runtime.Runtime;
 import ws.siri.yarnwrap.mapping.JavaObject;
 
@@ -39,7 +40,18 @@ public class Core implements ModInitializer {
                                             .executes(RequireCommand::lazy)))
                             .then(ClientCommandManager.literal("strict")
                                     .then(ClientCommandManager.argument("path", StringArgumentType.greedyString())
-                                            .executes(RequireCommand::strict)))));
+                                            .executes(RequireCommand::strict))))
+                    .then(ClientCommandManager.literal("snapshot")
+                            .then(ClientCommandManager.literal("create")
+                                    .executes(SnapshotCommand::snap)
+                                    .then(ClientCommandManager.argument("name", StringArgumentType.greedyString())
+                                            .suggests(SnapshotCommand.listProvider())
+                                            .executes(SnapshotCommand::snapNamed)))
+                            .then(ClientCommandManager.literal("restore")
+                                    .then(ClientCommandManager.argument("file", StringArgumentType.greedyString())
+                                            .suggests(SnapshotCommand.listProvider())
+                                            .executes(SnapshotCommand::restore)))));
+
         });
     }
 

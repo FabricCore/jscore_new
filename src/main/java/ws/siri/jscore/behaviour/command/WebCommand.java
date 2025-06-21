@@ -1,4 +1,4 @@
-package ws.siri.jscore.behaviour;
+package ws.siri.jscore.behaviour.command;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -22,21 +22,17 @@ public class WebCommand {
 
     public static int web(CommandContext<FabricClientCommandSource> context) {
         CompletableFuture.runAsync(() -> {
-            String url = context.getArgument("url", String.class);
-
-            if (MinecraftClient.getInstance().player != null)
-                MinecraftClient.getInstance().inGameHud.getChatHud()
-                        .addMessage(Text.literal("Running from ").append(url).formatted(Formatting.GREEN));
-
-            HttpRequest req = HttpRequest.newBuilder(URI.create(url)).build();
-            String script;
             try {
+                String url = context.getArgument("url", String.class);
+
+                if (MinecraftClient.getInstance().player != null)
+                    MinecraftClient.getInstance().inGameHud.getChatHud()
+                            .addMessage(Text.literal("Running from ").append(url).formatted(Formatting.GREEN));
+
+                HttpRequest req = HttpRequest.newBuilder(URI.create(url)).build();
+                String script;
                 script = client.send(req, BodyHandlers.ofString()).body();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
 
-            try {
                 Object res = Runtime.evaluate(script, List.of("repl"), true);
 
                 if (MinecraftClient.getInstance().player != null)
@@ -48,6 +44,7 @@ public class WebCommand {
                     MinecraftClient.getInstance().inGameHud.getChatHud()
                             .addMessage(Text.literal("An error has occured when running this script:\n")
                                     .append(e.toString()).formatted(Formatting.RED));
+
             }
         });
 
