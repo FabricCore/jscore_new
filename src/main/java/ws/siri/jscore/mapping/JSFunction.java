@@ -25,6 +25,9 @@ public class JSFunction extends ScriptableObject implements Function, ScriptFunc
     public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         for (int i = 0; i < args.length; i++) {
             args[i] = Runtime.unwrap(args[i]);
+            if (args[i] instanceof Scriptable) {
+                args[i] = Context.jsToJava(args[i], Object.class);
+            }
         }
         try {
             Object res = run(args);

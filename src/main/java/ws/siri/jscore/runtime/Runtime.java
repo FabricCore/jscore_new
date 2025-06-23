@@ -160,7 +160,7 @@ public class Runtime {
                         if (Files.exists(basePath.resolve(newPath))) {
                             path = newPath;
                         } else {
-                            throw new RuntimeException("Could not find file at " + newPath.toString());
+                            throw new RuntimeException("Could not find file at " + path.toString());
                         }
                     } else {
                         throw new RuntimeException("Could not find file at " + path.toString());
@@ -170,7 +170,7 @@ public class Runtime {
                     if (Files.exists(basePath.resolve(newPath))) {
                         path = newPath;
                     } else {
-                        throw new RuntimeException("Could not find file at " + newPath.toString());
+                        throw new RuntimeException("Could not find file at " + path.toString());
                     }
                 }
 

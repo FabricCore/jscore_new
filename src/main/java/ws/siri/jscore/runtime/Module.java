@@ -83,7 +83,7 @@ public class Module extends ScriptableObject {
         try {
             lock.lock();
             res = Runtime.getContext().evaluateString(scope, expr,
-                    String.join(".", path) + (prelude ? "(prelude)" : ""),
+                    String.join("/", path) + (prelude ? "(prelude)" : ""),
                     1, null);
         } catch (Exception e) {
             maybeError = e;
@@ -186,6 +186,7 @@ public class Module extends ScriptableObject {
         }
 
         public Object call(String relativePath) {
+            System.out.println(isLazy);
             return Runtime.call(getRelativePath(relativePath), isLazy ? "lazy" : "strict", null);
         }
     }
