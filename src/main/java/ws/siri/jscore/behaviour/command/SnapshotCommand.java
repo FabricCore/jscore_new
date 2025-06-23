@@ -104,19 +104,78 @@ public class SnapshotCommand {
                     if (MinecraftClient.getInstance().player != null)
                         MinecraftClient.getInstance().inGameHud.getChatHud()
                                 .addMessage(
-                                        Text.literal("Snapshot loaded")
+                                        Text.literal("Snapshot restored")
                                                 .formatted(Formatting.YELLOW));
                 } else {
                     if (MinecraftClient.getInstance().player != null)
                         MinecraftClient.getInstance().inGameHud.getChatHud()
                                 .addMessage(
-                                        Text.literal("Snapshot not loaded: not snapshot with that name")
+                                        Text.literal("Snapshot not restored: not snapshot with that name")
                                                 .formatted(Formatting.RED));
                 }
             } catch (Exception e) {
                 if (MinecraftClient.getInstance().player != null)
                     MinecraftClient.getInstance().inGameHud.getChatHud()
                             .addMessage(Text.literal("An error has occured when creating snapshot:\n")
+                                    .append(e.toString()).formatted(Formatting.RED));
+            }
+        });
+        return 0;
+    }
+
+    public static int pull(CommandContext<FabricClientCommandSource> context) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                String url = context.getArgument("url", String.class);
+
+                if (MinecraftClient.getInstance().player != null)
+                    MinecraftClient.getInstance().inGameHud.getChatHud()
+                            .addMessage(Text.literal("> Pulling snapshot").formatted(Formatting.GREEN));
+
+                Snapshot.pull(url);
+
+                if (MinecraftClient.getInstance().player != null)
+                    MinecraftClient.getInstance().inGameHud.getChatHud()
+                            .addMessage(
+                                    Text.literal("Snapshot pulled")
+                                            .formatted(Formatting.YELLOW));
+            } catch (Exception e) {
+                if (MinecraftClient.getInstance().player != null)
+                    MinecraftClient.getInstance().inGameHud.getChatHud()
+                            .addMessage(Text.literal("An error has occured when pulling snapshot:\n")
+                                    .append(e.toString()).formatted(Formatting.RED));
+            }
+        });
+        return 0;
+    }
+
+    public static int delete(CommandContext<FabricClientCommandSource> context) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                String name = context.getArgument("file", String.class);
+
+                if (MinecraftClient.getInstance().player != null)
+                    MinecraftClient.getInstance().inGameHud.getChatHud()
+                            .addMessage(Text.literal("> Deleting snapshot " + name).formatted(Formatting.GREEN));
+
+                if (Snapshot.delete(name)) {
+                    if (MinecraftClient.getInstance().player != null)
+                        MinecraftClient.getInstance().inGameHud.getChatHud()
+                                .addMessage(
+                                        Text.literal("Snapshot deleted")
+                                                .formatted(Formatting.YELLOW));
+                } else {
+                    if (MinecraftClient.getInstance().player != null)
+                        MinecraftClient.getInstance().inGameHud.getChatHud()
+                                .addMessage(
+                                        Text.literal("Nothing deleted, snapshot does not exist")
+                                                .formatted(Formatting.YELLOW));
+                }
+
+            } catch (Exception e) {
+                if (MinecraftClient.getInstance().player != null)
+                    MinecraftClient.getInstance().inGameHud.getChatHud()
+                            .addMessage(Text.literal("An error has occured when deleting snapshot:\n")
                                     .append(e.toString()).formatted(Formatting.RED));
             }
         });

@@ -5,6 +5,10 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -20,6 +24,10 @@ import net.fabricmc.loader.api.FabricLoader;
 import ws.siri.jscore.Core;
 
 public class Snapshot {
+    private static HttpClient client = HttpClient.newBuilder()
+            .followRedirects(HttpClient.Redirect.NORMAL)
+            .build();
+
     public static String snap() {
         LocalDateTime now = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
@@ -80,10 +88,13 @@ public class Snapshot {
 
         }
 
+        Path tempConfigPath = FabricLoader.getInstance().getConfigDir().resolve(Core.MOD_ID + "-restoring");
+
         try {
-            Path tempConfigPath = FabricLoader.getInstance().getConfigDir().resolve(Core.MOD_ID + "-restoring");
             if (Files.exists(tempConfigPath))
                 FileUtils.deleteQuietly(tempConfigPath.toFile());
+
+            Files.createDirectories(tempConfigPath);
             InputStream is = new FileInputStream(snapshotPath.toFile());
 
             unzip(is, tempConfigPath);
@@ -91,12 +102,19 @@ public class Snapshot {
             if (Files.exists(configPath))
                 FileUtils.deleteQuietly(configPath.toFile());
 
-            Files.move(tempConfigPath, configPath);
-            return true;
+            if (Files.list(tempConfigPath).count() == 1 && Files.exists(tempConfigPath.resolve("jscore"))) {
+                Files.move(tempConfigPath.resolve("jscore"), configPath);
+            } else {
+                Files.move(tempConfigPath, configPath);
+            }
         } catch (Exception e) {
             throw new RuntimeException("Error when loading snapshot " + fileName + ": " + e);
+        } finally {
+            if (Files.exists(tempConfigPath))
+                FileUtils.deleteQuietly(tempConfigPath.toFile());
         }
 
+        return true;
     }
 
     private static void unzip(InputStream is, Path targetDir) throws IOException {
@@ -121,6 +139,7 @@ public class Snapshot {
 
     public static List<String> list() {
         try {
+            setupDir();
             return Files.list(FabricLoader.getInstance().getConfigDir().resolve(Core.MOD_ID + "-snapshots"))
                     .map((path) -> path.getFileName().toString()).toList();
         } catch (IOException e) {
@@ -159,5 +178,57 @@ public class Snapshot {
             zipOut.write(bytes, 0, length);
         }
         fis.close();
+    }
+
+    public static boolean delete(String name) {
+        Path filePath = FabricLoader.getInstance().getConfigDir().resolve(Core.MOD_ID + "-snapshots").resolve(name);
+
+        if(Files.exists(filePath)) {
+            try {
+                Files.delete(filePath);
+            } catch (Exception e) {
+                throw new RuntimeException("Error when deleting file " + name + ": " + e);
+            }
+
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public static void pull(String url) {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .build();
+
+        Path configPath = FabricLoader.getInstance().getConfigDir().resolve(Core.MOD_ID);
+        Path tempConfigPath = FabricLoader.getInstance().getConfigDir().resolve(Core.MOD_ID + "-pulling");
+
+        try {
+            if (Files.exists(configPath))
+                FileUtils.deleteQuietly(configPath.toFile());
+            InputStream is = client.send(request, BodyHandlers.ofInputStream()).body();
+
+            if (Files.exists(tempConfigPath))
+                FileUtils.deleteQuietly(tempConfigPath.toFile());
+
+            Files.createDirectories(tempConfigPath);
+            unzip(is, tempConfigPath);
+
+            if (Files.exists(configPath))
+                FileUtils.deleteQuietly(configPath.toFile());
+
+            if (Files.list(tempConfigPath).count() == 1 && Files.exists(tempConfigPath.resolve("jscore"))) {
+                Files.move(tempConfigPath.resolve("jscore"), configPath);
+            } else {
+                Files.move(tempConfigPath, configPath);
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error when pulling snapshot: " + e);
+        } finally {
+            if (Files.exists(tempConfigPath))
+                FileUtils.deleteQuietly(tempConfigPath.toFile());
+        }
     }
 }
