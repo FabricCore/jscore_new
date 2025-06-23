@@ -37,14 +37,21 @@ public class Runtime {
     }
 
     public static Optional<String> getPrelude() {
-        Path path = FabricLoader.getInstance().getConfigDir().resolve(Core.MOD_ID).resolve("prelude.js");
+        Path basePath = FabricLoader.getInstance().getConfigDir().resolve(Core.MOD_ID);
 
-        if (Files.exists(path))
+        if (Files.exists(basePath.resolve("prelude.js"))) {
             try {
-                return Optional.of(Files.readString(path));
+                return Optional.of(Files.readString(basePath.resolve("prelude.js")));
             } catch (IOException e) {
                 throw new RuntimeException("Error getting prelude: " + e);
             }
+        } else if(Files.exists(basePath.resolve("prelude").resolve("index.js"))) {
+            try {
+                return Optional.of(Files.readString(basePath.resolve("prelude").resolve("index.js")));
+            } catch (IOException e) {
+                throw new RuntimeException("Error getting prelude: " + e);
+            }
+        }
 
         return Optional.empty();
     }
