@@ -11,6 +11,7 @@ import java.util.Optional;
 
 import org.jetbrains.annotations.Nullable;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ScriptableObject;
 
 import net.fabricmc.loader.api.FabricLoader;
 import ws.siri.jscore.Core;
@@ -25,6 +26,12 @@ import ws.siri.yarnwrap.mapping.JavaObject;
 import ws.siri.yarnwrap.mapping.JavaPackage;
 
 public class Runtime {
+    public static Object global = new ScriptableObject() {
+        public String getClassName() {
+            return "org.mozilla.javascript.ScriptableObject";
+        };
+    };
+
     private static HashMap<List<String>, Module> modules = new HashMap<>();
 
     public static Object evaluate(String expr, List<String> path, boolean isLazy) {
@@ -33,7 +40,6 @@ public class Runtime {
         } catch (Exception e) {
             throw new RuntimeException("caught " + e);
         }
-
     }
 
     public static Optional<String> getPrelude() {
@@ -45,7 +51,7 @@ public class Runtime {
             } catch (IOException e) {
                 throw new RuntimeException("Error getting prelude: " + e);
             }
-        } else if(Files.exists(basePath.resolve("prelude").resolve("index.js"))) {
+        } else if (Files.exists(basePath.resolve("prelude").resolve("index.js"))) {
             try {
                 return Optional.of(Files.readString(basePath.resolve("prelude").resolve("index.js")));
             } catch (IOException e) {

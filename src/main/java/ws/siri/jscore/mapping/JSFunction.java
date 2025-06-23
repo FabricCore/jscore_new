@@ -1,5 +1,6 @@
 package ws.siri.jscore.mapping;
 
+import org.mozilla.javascript.ConsString;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Scriptable;
@@ -27,6 +28,8 @@ public class JSFunction extends ScriptableObject implements Function, ScriptFunc
             args[i] = Runtime.unwrap(args[i]);
             if (args[i] instanceof Scriptable) {
                 args[i] = Context.jsToJava(args[i], Object.class);
+            } else if(args[i] instanceof ConsString) {
+                args[i] = args[i].toString();
             }
         }
         try {

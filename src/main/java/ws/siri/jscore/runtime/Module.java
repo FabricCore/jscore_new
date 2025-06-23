@@ -33,6 +33,8 @@ public class Module extends ScriptableObject {
      * module.require()
      */
     public JSFunction require = (JSFunction) new JSObject(new JavaObject(new Require())).get("call", null);
+    public JSFunction eval = (JSFunction) new JSObject(new JavaObject(this)).get("evaluateSimple", null);
+    public JSFunction evalFile = (JSFunction) new JSObject(new JavaObject(this)).get("appendPrelude", null);
 
     /**
      * Lock on when evaluating an expression
@@ -58,11 +60,15 @@ public class Module extends ScriptableObject {
         Optional<String> prelude = Runtime.getPrelude();
 
         if (prelude.isPresent())
-            appendPrelude(prelude.get());
+            appendPrelude(prelude.get(), "prelude");
     }
 
-    private void appendPrelude(String content) {
-        evaluate(content, true, true);
+    public void appendPrelude(String content, String name) {
+        evaluate(content, true, Optional.of(name));
+    }
+
+    public Object evaluateSimple(String expr) {
+        return evaluate(expr);
     }
 
     /**
@@ -71,11 +77,15 @@ public class Module extends ScriptableObject {
      * @param expr
      * @return
      */
-    public Object evaluate(String expr, boolean isLazy) {
-        return evaluate(expr, isLazy, false);
+    public Object evaluate(String expr) {
+        return evaluate(expr, true);
     }
 
-    private Object evaluate(String expr, boolean isLazy, boolean prelude) {
+    public Object evaluate(String expr, boolean isLazy) {
+        return evaluate(expr, isLazy, Optional.empty());
+    }
+
+    private Object evaluate(String expr, boolean isLazy, Optional<String> preludeName) {
         this.isLazy = isLazy;
 
         Exception maybeError = null;
@@ -83,7 +93,7 @@ public class Module extends ScriptableObject {
         try {
             lock.lock();
             res = Runtime.getContext().evaluateString(scope, expr,
-                    String.join("/", path) + (prelude ? "(prelude)" : ""),
+                    String.join("/", path) + (preludeName.isPresent() ? "(prelude: " + preludeName.get() + ")" : ""),
                     1, null);
         } catch (Exception e) {
             maybeError = e;
@@ -114,6 +124,12 @@ public class Module extends ScriptableObject {
                 return require;
             case "path":
                 return path;
+            case "globals":
+                return Runtime.global;
+            case "eval":
+                return eval;
+            case "evalFile":
+                return evalFile;
             default:
                 return NOT_FOUND;
         }
@@ -125,6 +141,9 @@ public class Module extends ScriptableObject {
             case "exports":
                 exports = value;
                 break;
+            case "globals":
+                Runtime.global = value;
+                break;
             default:
                 throw new UnsupportedOperationException(String.format("Cannot change value of module.%s", name));
         }
@@ -135,8 +154,11 @@ public class Module extends ScriptableObject {
         switch (name) {
             case "exports":
                 return exports != null;
+            case "eval":
+            case "evalFile":
             case "require":
             case "path":
+            case "globals":
                 return true;
             default:
                 return false;
