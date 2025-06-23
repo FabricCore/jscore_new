@@ -2,6 +2,7 @@ package ws.siri.jscore.runtime;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -53,6 +54,15 @@ public class Module extends ScriptableObject {
         scope.put("module", scope, this);
 
         this.path = path;
+
+        Optional<String> prelude = Runtime.getPrelude();
+
+        if (prelude.isPresent())
+            appendPrelude(prelude.get());
+    }
+
+    private void appendPrelude(String content) {
+        evaluate(content, true, true);
     }
 
     /**
@@ -62,13 +72,19 @@ public class Module extends ScriptableObject {
      * @return
      */
     public Object evaluate(String expr, boolean isLazy) {
+        return evaluate(expr, isLazy, false);
+    }
+
+    private Object evaluate(String expr, boolean isLazy, boolean prelude) {
         this.isLazy = isLazy;
 
         Exception maybeError = null;
         Object res = null;
         try {
             lock.lock();
-            res = Runtime.getContext().evaluateString(scope, expr, String.join(".", path), 1, null);
+            res = Runtime.getContext().evaluateString(scope, expr,
+                    String.join(".", path) + (prelude ? "(prelude)" : ""),
+                    1, null);
         } catch (Exception e) {
             maybeError = e;
         } finally {
@@ -96,6 +112,8 @@ public class Module extends ScriptableObject {
                 return exports;
             case "require":
                 return require;
+            case "path":
+                return path;
             default:
                 return NOT_FOUND;
         }
@@ -118,6 +136,7 @@ public class Module extends ScriptableObject {
             case "exports":
                 return exports != null;
             case "require":
+            case "path":
                 return true;
             default:
                 return false;
@@ -156,6 +175,10 @@ public class Module extends ScriptableObject {
     public class Require {
         private Path getRelativePath(String relativePath) {
             return normalisePath(Path.of(String.join("/", path)).resolveSibling(relativePath));
+        }
+
+        public Object call(String relativePath, String mode, String content) {
+            return Runtime.call(getRelativePath(relativePath), mode, content);
         }
 
         public Object call(String relativePath, String mode) {

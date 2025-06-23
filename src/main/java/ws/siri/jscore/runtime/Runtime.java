@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 import org.jetbrains.annotations.Nullable;
 import org.mozilla.javascript.Context;
@@ -33,6 +34,19 @@ public class Runtime {
             throw new RuntimeException("caught " + e);
         }
 
+    }
+
+    public static Optional<String> getPrelude() {
+        Path path = FabricLoader.getInstance().getConfigDir().resolve(Core.MOD_ID).resolve("prelude.js");
+
+        if (Files.exists(path))
+            try {
+                return Optional.of(Files.readString(path));
+            } catch (IOException e) {
+                throw new RuntimeException("Error getting prelude: " + e);
+            }
+
+        return Optional.empty();
     }
 
     /**
@@ -95,7 +109,7 @@ public class Runtime {
      * 
      * @param path    path from which the expression comes from
      * @param mode    mod to evaluate in: lazy or strict
-     * @param content TODO provide a script instead of using the file content 
+     * @param content TODO provide a script instead of using the file content
      * @return module.exports
      */
     @Nullable
@@ -162,6 +176,29 @@ public class Runtime {
                 pathList = Arrays.asList(path.toString().split("/"));
                 evaluate(content, pathList, isLazy);
                 return modules.get(pathList).exports;
+
+            case "append":
+                pathList = Arrays.asList(path.toString().split("/"));
+                if (!modules.containsKey(pathList)) {
+                    List<String> pathWithExtension = new ArrayList<>(pathList);
+                    pathWithExtension.set(pathWithExtension.size() - 1, pathWithExtension.getLast() + ".js");
+
+                    if (modules.containsKey(pathWithExtension)) {
+                        pathList = pathWithExtension;
+                    } else {
+                        List<String> pathWithIndexJs = new ArrayList<>(pathList);
+                        pathWithIndexJs.add("index.js");
+
+                        if (modules.containsKey(pathWithIndexJs)) {
+                            pathList = pathWithIndexJs;
+                        } else {
+                            throw new RuntimeException("Cannot find module with name: " + path);
+                        }
+                    }
+                }
+
+                Module module = modules.get(pathList);
+                module.evaluate(content, isLazy);
             default:
                 throw new UnsupportedOperationException("No require mode '" + mode + "'");
         }
