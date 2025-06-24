@@ -208,7 +208,6 @@ public class Module extends ScriptableObject {
         }
 
         public Object call(String relativePath) {
-            System.out.println(isLazy);
             return Runtime.call(getRelativePath(relativePath), isLazy ? "lazy" : "strict", null);
         }
     }
