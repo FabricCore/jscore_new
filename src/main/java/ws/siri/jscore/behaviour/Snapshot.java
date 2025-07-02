@@ -202,8 +202,6 @@ public class Snapshot {
         Path tempConfigPath = FabricLoader.getInstance().getConfigDir().resolve(Core.MOD_ID + "-pulling");
 
         try {
-            if (Files.exists(configPath))
-                FileUtils.deleteQuietly(configPath.toFile());
             InputStream is = client.send(request, BodyHandlers.ofInputStream()).body();
 
             if (Files.exists(tempConfigPath))

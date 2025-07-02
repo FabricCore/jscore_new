@@ -34,7 +34,8 @@ public class Module extends ScriptableObject {
      */
     public JSFunction require = (JSFunction) new JSObject(new JavaObject(new Require())).get("call", null);
     public JSFunction eval = (JSFunction) new JSObject(new JavaObject(this)).get("evaluateSimple", null);
-    public JSFunction evalFile = (JSFunction) new JSObject(new JavaObject(this)).get("appendPrelude", null);
+    public JSFunction evalFile = (JSFunction) new JSObject(new JavaObject(this)).get("evaluateFile", null);
+    public JSFunction applyPrelude = (JSFunction) new JSObject(new JavaObject(this)).get("appendPrelude", null);
 
     /**
      * Lock on when evaluating an expression
@@ -57,13 +58,17 @@ public class Module extends ScriptableObject {
 
         this.path = path;
 
+        appendPrelude();
+    }
+
+    public void appendPrelude() {
         Optional<String> prelude = Runtime.getPrelude();
 
         if (prelude.isPresent())
-            appendPrelude(prelude.get(), "prelude");
+            evaluateFile(prelude.get(), "prelude");
     }
 
-    public void appendPrelude(String content, String name) {
+    public void evaluateFile(String content, String name) {
         evaluate(content, true, Optional.of(name));
     }
 
@@ -130,6 +135,8 @@ public class Module extends ScriptableObject {
                 return eval;
             case "evalFile":
                 return evalFile;
+            case "applyPrelude":
+                return applyPrelude;
             default:
                 return NOT_FOUND;
         }
@@ -159,6 +166,7 @@ public class Module extends ScriptableObject {
             case "require":
             case "path":
             case "globals":
+            case "applyPrelude":
                 return true;
             default:
                 return false;

@@ -26,19 +26,41 @@ import ws.siri.yarnwrap.mapping.JavaObject;
 import ws.siri.yarnwrap.mapping.JavaPackage;
 
 public class Runtime {
-    public static Object global = new ScriptableObject() {
-        public String getClassName() {
-            return "org.mozilla.javascript.ScriptableObject";
+    public static Object global = newGlobal();
+
+    private static ScriptableObject newGlobal() {
+        return new ScriptableObject() {
+            public String getClassName() {
+                return "org.mozilla.javascript.ScriptableObject";
+            };
         };
-    };
+    }
 
     private static HashMap<List<String>, Module> modules = new HashMap<>();
+
+    public static void init() {
+        Path entryPoint = FabricLoader.getInstance().getConfigDir().resolve(Core.MOD_ID);
+
+        if (Files.exists(entryPoint.resolve("init.js")) || Files.exists(entryPoint.resolve("init").resolve("index.js"))) {
+            Runtime.call(Path.of("init"), "lazy", null);
+        }
+    }
+
+    public static void stop() {
+        Path entryPoint = FabricLoader.getInstance().getConfigDir().resolve(Core.MOD_ID);
+
+        if (Files.exists(entryPoint.resolve("stop.js")) || Files.exists(entryPoint.resolve("stop").resolve("index.js"))) {
+            Runtime.call(Path.of("stop"), "lazy", null);
+        }
+
+        modules = new HashMap<>();
+    }
 
     public static Object evaluate(String expr, List<String> path, boolean isLazy) {
         try {
             return getModule(path).evaluate(expr, isLazy);
         } catch (Exception e) {
-            throw new RuntimeException("caught " + e);
+            throw new RuntimeException(e);
         }
     }
 
